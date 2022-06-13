@@ -28,10 +28,10 @@ void queue_destroy(Queue* qu);
 void queue_clear (Queue* qu);
 bool queue_is_empty (Queue* qu);
 
-void queue_pop(Queue* qu);
+void queue_pop(Queue* qu, bool to_close);
 void queue_front (Queue* qu, int* val, struct timeval* arriv_time);
 
 bool queue_push_back (Queue* qu, int val);
-void queue_pop_back (Queue* qu);
+void queue_pop_back (Queue* qu, bool to_close);
 void queue_drop_random (Queue* qu, int amount_to_drop);
 #endif

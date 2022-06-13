@@ -50,7 +50,7 @@ void overload_handler(char* schedalg, int queue_size)
 	}
 	else if (strcmp(schedalg, "dt") == 0)
 	{
-		queue_pop_back(requests_pending);
+		queue_pop_back(requests_pending, true);
 	}
 	else if (strcmp(schedalg, "random") == 0)
 	{
@@ -60,7 +60,8 @@ void overload_handler(char* schedalg, int queue_size)
 	}
 	else if (strcmp(schedalg, "dh") == 0)
 	{
-		queue_pop(requests_pending);
+		//printf("I am full\n\n");
+		queue_pop(requests_pending, true);
 	}
 }
 void* thread_request_handler(void* index)
@@ -78,11 +79,14 @@ void* thread_request_handler(void* index)
 		pthread_mutex_lock(&lock_queue);
 		while (queue_is_empty(requests_pending)) 
 		{
+			//printf(" thread number %d going to wait (there are %d reqs waiting and handleing - %d) \n",
+			// *((int*)index), queue_get_size(requests_pending), requests_handled);
 			pthread_cond_wait(&c_free, &lock_queue);
 		}
+		//printf(" thread number %d got request\n", *((int*)index));
 		int fd_to_handle;  
 		queue_front(requests_pending, &fd_to_handle, &thread_stats->arrival_time);
-		queue_pop(requests_pending);
+		queue_pop(requests_pending, false);
 		requests_handled++;
 		
 		pthread_mutex_unlock(&lock_queue);
@@ -90,11 +94,9 @@ void* thread_request_handler(void* index)
 		thread_stats->total_req++;
 		struct timeval start_time;
 		gettimeofday(&start_time, NULL);
-		printf("time of day\n");
 		timersub(&start_time, &(thread_stats->arrival_time), &(thread_stats->wait_time));
-		printf("timersub\n");
 		requestHandle(fd_to_handle, thread_stats);
-		printf("after handling the request by thread number %d\n", *((int*)index));
+		//printf("after handling the request by thread number %d\n", *((int*)index));
 		close(fd_to_handle);
 
 		pthread_mutex_lock(&lock_queue);
@@ -143,15 +145,24 @@ int main(int argc, char *argv[])
 	}
 
     listenfd = Open_listenfd(port);
-    while (1) {
+    while(1) {
 		clientlen = sizeof(clientaddr);
 		/////////
 		connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+		if (connfd == -1)
+		{
+			//printf("byebyebye\n");
+			close(listenfd);
+			exit(1);
+		}
 		//////////
 		////// my addition:
+		
 		pthread_mutex_lock(&lock_queue);
+		//printf("worker thread locked\n");
 		if (requests_handled == queue_size && strcmp(schedalg, "block") != 0)
 		{
+			close(connfd);
 			pthread_mutex_unlock(&lock_queue);
 			continue;
 		}
@@ -167,9 +178,11 @@ int main(int argc, char *argv[])
 		{
 			pthread_cond_signal(&c_free);
 		}
+		//printf("worker thread unlocked\n");
 		pthread_mutex_unlock(&lock_queue);
 		
 	}
+	exit(1);
 	//////////
 	// 
 	// HW3: In general, don't handle the request in the main thread.

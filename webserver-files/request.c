@@ -125,15 +125,16 @@ void requestServeDynamic(int fd, char *filename, char *cgiargs, Stats* thread_st
    sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, thread_stats->dynamic_req);
 
    Rio_writen(fd, buf, strlen(buf));
-
-   if (Fork() == 0) {
+   pid_t fork_pid = Fork();
+   if (fork_pid == 0) {
       /* Child process */
       Setenv("QUERY_STRING", cgiargs, 1);
       /* When the CGI process writes to stdout, it will instead go to the socket */
       Dup2(fd, STDOUT_FILENO);
       Execve(filename, emptylist, environ);
    }
-   Wait(NULL);
+   WaitPid(fork_pid, NULL, 0);
+   //Wait(NULL);
 }
 
 
@@ -199,18 +200,18 @@ void requestHandle(int fd, Stats* thread_stats)
    }
 
    if (is_static) {
+      thread_stats->static_req++;
       if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not read this file", thread_stats);
          return;
       }
-      thread_stats->static_req++;
       requestServeStatic(fd, filename, sbuf.st_size, thread_stats);
    } else {
+      thread_stats->dynamic_req++;
       if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not run this CGI program", thread_stats);
          return;
       }
-      thread_stats->dynamic_req++;
       requestServeDynamic(fd, filename, cgiargs, thread_stats);
    }
 }

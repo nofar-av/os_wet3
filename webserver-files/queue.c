@@ -38,7 +38,7 @@ Queue* queue_create ()
 	return qu;
 }
 
-void queue_remove_node (Queue* qu, Node* node)
+void queue_remove_node (Queue* qu, Node* node, bool to_close)
 {
 	if (qu == NULL || node == NULL)
 	{
@@ -63,6 +63,11 @@ void queue_remove_node (Queue* qu, Node* node)
 		next->prev = node->prev;
 	}
 	qu->size--;
+	//printf("queue size (r) - %d\n", qu->size);
+	if (to_close)
+	{
+		close(node->val);
+	}
 	free_node(node);
 }
 
@@ -89,7 +94,7 @@ void queue_clear (Queue* qu)
 {
 	while (!queue_is_empty(qu))
 	{
-		queue_pop(qu);
+		queue_pop(qu, true);
 	}
 }
 
@@ -127,6 +132,7 @@ bool queue_push_back (Queue* qu, int val)
 		to_add->prev = old_tail;
 		qu->size++;
 	}
+	//printf("queue size (add) - %d\n", qu->size);
 	return true;
 }
 
@@ -140,22 +146,23 @@ void queue_front (Queue* qu, int* val, struct timeval* arrive_time)
 	arrive_time->tv_sec = qu->head->current_time.tv_sec;
 	arrive_time->tv_usec = qu->head->current_time.tv_usec;
 }
-void queue_pop (Queue* qu)
+
+void queue_pop(Queue* qu, bool to_close)
 {
 	if (qu == NULL || qu->size == 0)
 	{
 		return ;
 	}
-	queue_remove_node(qu, qu->head);
+	queue_remove_node(qu, qu->head, to_close);
 }
 
-void queue_pop_back (Queue* qu)
+void queue_pop_back (Queue* qu, bool to_close)
 {
 	if (qu == NULL || qu->size == 0)
 	{
 		return ;
 	}
-	queue_remove_node(qu, qu->tail);
+	queue_remove_node(qu, qu->tail, to_close);
 }
 
 void queue_drop_random (Queue* qu, int amount_to_drop)
@@ -170,6 +177,6 @@ void queue_drop_random (Queue* qu, int amount_to_drop)
 		Node* temp = qu->head; 
 		for (int j = 0; temp != NULL && j < to_drop; j++, temp = temp->next)
 		{;	}
-		queue_remove_node(qu, temp);
+		queue_remove_node(qu, temp, true);
 	}
 }
