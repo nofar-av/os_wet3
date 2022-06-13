@@ -35,7 +35,7 @@ void getargs(int *port, int argc, char *argv[], int *threads, int* queue_size, c
     strcpy(schedalg, argv[4]);
 }
 
-void overload_handler(char* schedalg)
+void overload_handler(char* schedalg, int queue_size)
 {
 	if (schedalg == NULL )
 	{
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 		}
 		else if (queue_get_size(requests_pending) + requests_handled >= queue_size) //TODO::or if?
 		{
-			overload_handler(schedalg);
+			overload_handler(schedalg, queue_size);
 		}
 		if (!queue_push_back(requests_pending, connfd))
 		{
