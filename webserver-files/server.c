@@ -35,7 +35,7 @@ void getargs(int *port, int argc, char *argv[], int *threads, int* queue_size, c
     strcpy(schedalg, argv[4]);
 }
 
-void overload_handler(char* schedalg, int queue_size)
+void overload_handler(char* schedalg)
 {
 	if (schedalg == NULL )
 	{
