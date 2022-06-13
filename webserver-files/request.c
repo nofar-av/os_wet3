@@ -187,7 +187,7 @@ void requestHandle(int fd, Stats* thread_stats)
    printf("%s %s %s\n", method, uri, version);
 
    if (strcasecmp(method, "GET")) {
-      requestError(fd, method, "501", "Not Implemented", "OS-HW3 Server does not implement this method");
+      requestError(fd, method, "501", "Not Implemented", "OS-HW3 Server does not implement this method", thread_stats);
       return;
    }
    requestReadhdrs(&rio);
@@ -207,7 +207,7 @@ void requestHandle(int fd, Stats* thread_stats)
       requestServeStatic(fd, filename, sbuf.st_size, thread_stats);
    } else {
       if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {
-         requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not run this CGI program");
+         requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not run this CGI program", thread_stats);
          return;
       }
       thread_stats->dynamic_req++;
