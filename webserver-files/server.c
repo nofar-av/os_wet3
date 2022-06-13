@@ -54,7 +54,7 @@ void overload_handler(char* schedalg, int queue_size)
 	}
 	else if (strcmp(schedalg, "random") == 0)
 	{
-		double calc_to_drop = 0.3 * queue_size;
+		double calc_to_drop = 0.3 *queue_get_size(requests_pending);
 		int amount_to_drop = (int)(ceil(calc_to_drop));
 		queue_drop_random(requests_pending, amount_to_drop);
 	}
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 		}
 		else if (queue_get_size(requests_pending) + requests_handled >= queue_size) //TODO::or if?
 		{
-			overload_handler(schedalg, queue_size);
+			overload_handler(schedalg);
 		}
 		if (!queue_push_back(requests_pending, connfd))
 		{
