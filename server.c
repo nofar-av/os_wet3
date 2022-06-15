@@ -40,8 +40,9 @@ void* thread_request_handler(void* index)
 	Stats* thread_stats = malloc(sizeof(*thread_stats));
 	if (thread_stats == NULL)
 	{ 
-
+		exit(1);
 	}
+	thread_stats->thread_id = *((int*)index);
 	thread_stats->static_req = 0;
 	thread_stats->dynamic_req = 0;
 	thread_stats->total_req = 0;
@@ -86,15 +87,15 @@ void overload_handler(char* schedalg, int queue_size)
 	}
 	if (strcmp(schedalg, "block") == 0)
 	{
-		while (queue_get_size(requests_pending) +requests_handled >= queue_size)
+		while (queue_get_size(requests_pending) + requests_handled >= queue_size)
 		{
 			pthread_cond_wait(&c_busy, &lock_queue);
 		}
 	}
-	else if (strcmp(schedalg, "dt") == 0)
+	/*else if (strcmp(schedalg, "dt") == 0)
 	{
 		queue_pop_back(requests_pending, true);
-	}
+	}*/
 	else if (strcmp(schedalg, "random") == 0)
 	{
 		double calc_to_drop = 0.3 *queue_get_size(requests_pending);
@@ -167,13 +168,19 @@ int main(int argc, char *argv[])
 			pthread_mutex_unlock(&lock_queue);
 			continue;
 		}
-		else if (queue_get_size(requests_pending) + requests_handled >= queue_size) //TODO::or if?
+		else if (queue_get_size(requests_pending) + requests_handled >= queue_size)
 		{
+			if(strcmp(schedalg, "dt") == 0)
+			{
+				Close(connfd);
+				pthread_mutex_unlock(&lock_queue);
+				continue;
+			}
 			overload_handler(schedalg, queue_size);
 		}
 		if (!queue_push_back(requests_pending, connfd))
 		{
-			printf("something went wrong\n");
+			//printf("something went wrong\n");
 		}
 		if (queue_get_size(requests_pending))
 		{
