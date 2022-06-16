@@ -19,7 +19,7 @@ typedef struct queue {
 
 //front = head-> ... ->tail = back
 
-Node* node_create(int val);
+Node* node_create(int val, struct timeval current_time);
 void free_node(Node* to_delete);
 
 Queue* queue_create ();
@@ -31,7 +31,7 @@ bool queue_is_empty (Queue* qu);
 void queue_pop(Queue* qu, bool to_close);
 void queue_front (Queue* qu, int* val, struct timeval* arriv_time);
 
-bool queue_push_back (Queue* qu, int val);
+bool queue_push_back (Queue* qu, int val, struct timeval current_time);
 void queue_pop_back (Queue* qu, bool to_close);
 void queue_drop_random (Queue* qu, int amount_to_drop);
 #endif

@@ -1,7 +1,7 @@
 #include "queue.h"
 
 
-Node* node_create(int val)
+Node* node_create(int val, struct timeval current_time)
 {
 	Node* new_node = malloc(sizeof(*new_node));
 	if (new_node == NULL)
@@ -9,7 +9,7 @@ Node* node_create(int val)
 		return NULL;
 	}
 	new_node->val = val;
-  	gettimeofday(&(new_node->current_time), NULL);
+	new_node->current_time = current_time;
 	new_node->next = NULL;
 	new_node->prev = NULL;
 	return new_node;
@@ -107,13 +107,13 @@ bool queue_is_empty (Queue* qu)
 	return (qu->size == 0);
 }
 
-bool queue_push_back (Queue* qu, int val)
+bool queue_push_back (Queue* qu, int val, struct timeval current_time)
 {
 	if (qu == NULL)
 	{
 		return false;
 	}
-	Node* to_add = node_create(val);
+	Node* to_add = node_create(val, current_time);
 	if (to_add == NULL)
 	{
 		return false;

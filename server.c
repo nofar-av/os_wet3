@@ -98,7 +98,7 @@ void overload_handler(char* schedalg, int queue_size)
 	}*/
 	else if (strcmp(schedalg, "random") == 0)
 	{
-		double calc_to_drop = 0.3 *queue_get_size(requests_pending);
+		double calc_to_drop = 0.3 * (double)queue_get_size(requests_pending);
 		int amount_to_drop = (int)(ceil(calc_to_drop));
 		queue_drop_random(requests_pending, amount_to_drop);
 	}
@@ -151,6 +151,8 @@ int main(int argc, char *argv[])
 		clientlen = sizeof(clientaddr);
 		/////////
 		connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+		struct timeval current_time;
+		gettimeofday(&current_time, NULL);
 		if (connfd == -1)
 		{
 			//printf("byebyebye\n");
@@ -178,7 +180,7 @@ int main(int argc, char *argv[])
 			}
 			overload_handler(schedalg, queue_size);
 		}
-		if (!queue_push_back(requests_pending, connfd))
+		if (!queue_push_back(requests_pending, connfd, current_time))
 		{
 			//printf("something went wrong\n");
 		}
