@@ -1,17 +1,18 @@
 #include "queue.h"
 
 
-Node* node_create(int val)
+Node* node_create(Stat* request)
 {
 	Node* new_node = malloc(sizeof(*new_node));
 	if (new_node == NULL)
 	{
 		return NULL;
 	}
-	new_node->val = val;
+	new_node->request = request;
+	/*new_node->val = val;
   	gettimeofday(&(new_node->current_time), NULL);
 	new_node->next = NULL;
-	new_node->prev = NULL;
+	new_node->prev = NULL;*/
 	return new_node;
 }
 
@@ -21,7 +22,8 @@ void free_node(Node* to_delete)
 	{
 		return;
 	}
-	//free(to_delete->val);
+	free(to_delete->request->arrival_time);
+	free(to_delete->request);
 	free(to_delete);
 }
 
@@ -66,7 +68,7 @@ void queue_remove_node (Queue* qu, Node* node, bool to_close)
 	//printf("queue size (r) - %d\n", qu->size);
 	if (to_close)
 	{
-		close(node->val);
+		close(node->request->connfd);
 	}
 	free_node(node);
 }
@@ -107,13 +109,13 @@ bool queue_is_empty (Queue* qu)
 	return (qu->size == 0);
 }
 
-bool queue_push_back (Queue* qu, int val)
+bool queue_push_back (Queue* qu, Stat* request)
 {
 	if (qu == NULL)
 	{
 		return false;
 	}
-	Node* to_add = node_create(val);
+	Node* to_add = node_create(request);
 	if (to_add == NULL)
 	{
 		return false;
@@ -136,15 +138,18 @@ bool queue_push_back (Queue* qu, int val)
 	return true;
 }
 
-void queue_front (Queue* qu, int* val, struct timeval* arrive_time)
+void queue_front  (Queue* qu, Stat* request)
 {
-	if (qu == NULL || qu->size == 0 || arrive_time == NULL)
+	if (qu == NULL || qu->size == 0 || request == NULL)
 	{
 		return;
 	}
-	*val = qu->head->val;
+	request->connfd = qu->head->request->connfd;
+	request->arrive_time->tv_sec = qu->head->request->arrival_time->tv_sec;
+	request->arrive_time->tv_usec = qu->head->request->arrival_time->tv_usec;
+	/**val = qu->head->val;
 	arrive_time->tv_sec = qu->head->current_time.tv_sec;
-	arrive_time->tv_usec = qu->head->current_time.tv_usec;
+	arrive_time->tv_usec = qu->head->current_time.tv_usec;*/
 }
 
 void queue_pop(Queue* qu, bool to_close)

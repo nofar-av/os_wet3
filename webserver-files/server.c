@@ -48,10 +48,6 @@ void overload_handler(char* schedalg, int queue_size)
 			pthread_cond_wait(&c_busy, &lock_queue);
 		}
 	}
-	else if (strcmp(schedalg, "dt") == 0)
-	{
-		queue_pop_back(requests_pending, true);
-	}
 	else if (strcmp(schedalg, "random") == 0)
 	{
 		double calc_to_drop = 0.3 *queue_get_size(requests_pending);
@@ -67,13 +63,11 @@ void overload_handler(char* schedalg, int queue_size)
 void* thread_request_handler(void* index)
 {
 	Stats* thread_stats = malloc(sizeof(*thread_stats));
-	if (thread_stats == NULL)
-	{ 
-
-	}
+	thread_stats->thread_id = *((int*)index);
 	thread_stats->static_req = 0;
 	thread_stats->dynamic_req = 0;
 	thread_stats->total_req = 0;
+	thread_stats->arrival_time = malloc(sizeof(*thread_stats->arrival_time));
 	while (1)
 	{
 		pthread_mutex_lock(&lock_queue);
@@ -85,7 +79,8 @@ void* thread_request_handler(void* index)
 		}
 		//printf(" thread number %d got request\n", *((int*)index));
 		int fd_to_handle;  
-		queue_front(requests_pending, &fd_to_handle, &thread_stats->arrival_time);
+		//queue_front(requests_pending, &fd_to_handle, &thread_stats->arrival_time);
+		queue_front(requests_pending, thread_stats);
 		queue_pop(requests_pending, false);
 		requests_handled++;
 		
@@ -151,28 +146,40 @@ int main(int argc, char *argv[])
 		connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
 		if (connfd == -1)
 		{
-			//printf("byebyebye\n");
-			close(listenfd);
 			exit(1);
 		}
 		//////////
 		////// my addition:
-		
+		Stats* new_request = (Stats*)malloc(sizeof(*new_request));
+		gettimeofday(new_request->arrival_time, NULL);
+		new_request->connfd = connfd;
+
 		pthread_mutex_lock(&lock_queue);
-		//printf("worker thread locked\n");
-		if (requests_handled == queue_size && strcmp(schedalg, "block") != 0)
+		
+		if (requests_handled >= queue_size && strcmp(schedalg, "block") != 0) 
 		{
+			free(new_request->arrival_time);
+			free(new_request);
 			close(connfd);
 			pthread_mutex_unlock(&lock_queue);
 			continue;
 		}
 		else if (queue_get_size(requests_pending) + requests_handled >= queue_size) //TODO::or if?
 		{
+			if (strcmp(schedalg, "dt") == 0)
+			{
+				free(new_request->arrival_time);
+				free(new_request);
+				close(connfd);
+				pthread_mutex_unlock(&lock_queue);
+				continue;
+			}
 			overload_handler(schedalg, queue_size);
 		}
-		if (!queue_push_back(requests_pending, connfd))
+		if (!queue_push_back(requests_pending, new_request))
 		{
 			//something went wrong
+			exit(1);
 		}
 		if (queue_get_size(requests_pending))
 		{

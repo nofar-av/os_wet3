@@ -3,10 +3,12 @@
 
 #include <stdbool.h>
 #include "segel.h"
+#include "stats.h"
 
 typedef struct node {
-    int val;
-    struct timeval current_time;
+    Stats* request;
+    //int val;
+    //struct timeval current_time;
     struct node* next;
     struct node* prev;
 } Node;
@@ -19,7 +21,8 @@ typedef struct queue {
 
 //front = head-> ... ->tail = back
 
-Node* node_create(int val);
+//Node* node_create(int val);
+Node* node_create(Stat* request);
 void free_node(Node* to_delete);
 
 Queue* queue_create ();
@@ -29,9 +32,11 @@ void queue_clear (Queue* qu);
 bool queue_is_empty (Queue* qu);
 
 void queue_pop(Queue* qu, bool to_close);
-void queue_front (Queue* qu, int* val, struct timeval* arriv_time);
+//void queue_front (Queue* qu, int* val, struct timeval* arriv_time);
+void queue_front (Queue* qu, Stat* request);
 
-bool queue_push_back (Queue* qu, int val);
+bool queue_push_back (Queue* qu, Stat* request);
+//bool queue_push_back (Queue* qu, int val);
 void queue_pop_back (Queue* qu, bool to_close);
 void queue_drop_random (Queue* qu, int amount_to_drop);
 #endif
